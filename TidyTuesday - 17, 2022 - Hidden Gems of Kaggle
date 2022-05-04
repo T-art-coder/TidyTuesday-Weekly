@@ -1,0 +1,54 @@
+
+```{r}
+library(readr)
+Sys.setlocale("LC_TIME", "English")
+
+hidden_gems <- read_csv("hidden_gems.csv")
+head(hidden_gems)
+
+```
+
+```{r}
+library(skimr)
+skim(hidden_gems)
+```
+
+```{r}
+library(tidyverse)
+library(lubridate)
+library(scales)
+Sys.setenv(LANG = "en")
+```
+
+### Let's add columns for dates and number of words
+```{r}
+hidden_gems <- hidden_gems %>% mutate(n_words = str_count(review, "\\w+")) %>% mutate(new_date = cut(date, breaks = "month"))
+
+hidden_gems <- hidden_gems %>% mutate(id= row_number(),
+                                      review_month = floor_date(date, unit = "month"), review_quarter = floor_date(date, unit = "quarter") )
+```
+
+
+```{r fig.height=6, fig.width=8}
+my_caption <- "#TidyTuesday week 17 | HIDDEN GEMS OF KAGGLE | @TimurZolkin"
+
+fill <- "#4271AE"
+line <- "#1F3552"
+ggplot(hidden_gems,
+       aes(y = n_words, x = review_month, group = review_month)) +
+  geom_boxplot(fill = fill, colour = line, alpha = 0.7) + 
+  geom_jitter(show.legend = FALSE, alpha = 0.1, width = 15) +
+  theme_bw() +
+  labs(y = "Number of words in a review", 
+       title = "KAGGLE HIDDEN GEMS: REVIEW LENGTH",
+       subtitle = "REVIEW LENGTH HAS SHOWN PERSISTENT VOLATILITY",
+       caption = my_caption) +
+  theme(
+ ##   panel.background = element_rect(fill = "#FAFAFA", colour = "#FAFAFA"), makes background gray
+    plot.background = element_rect(fill = "#FAFAFA", colour = "#FAFAFA"),
+    axis.title.x = element_blank(), 
+    plot.title = element_text(hjust = 0),
+    plot.caption = element_text(hjust = 0.9, size = 8.5, color = "black"),
+    axis.text = element_text(face = "bold")
+    )
+```
