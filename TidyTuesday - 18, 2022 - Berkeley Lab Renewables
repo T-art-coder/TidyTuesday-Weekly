@@ -37,7 +37,7 @@ head(capacity)
 my_caption <- "#TidyTuesday week 18 | Berkley Lab data | @TimurZolkin"
 
 grob <- grobTree(textGrob("Parity with gas", x=0.5,  y=0.4, hjust=0,
-  gp=gpar(col="gray25", fontsize=10, fontface="italic")))
+  gp=gpar(col="navyblue", fontsize=12, fontface="bold.italic")))
 
 p <- average_cost %>% 
   mutate(Solar = solar_mwh/gas_mwh, Wind = wind_mwh/gas_mwh) %>%
@@ -57,9 +57,15 @@ p <- average_cost %>%
        title = "Berkeley Lab’s Utility-Scale Solar, 2021",
        subtitle = "Are renewables getting pricier again?",
        caption = my_caption) +
-  theme_minimal() +
+  theme_minimal(base_size = 12) +
   theme(axis.text = element_text(face = "bold"),
-        plot.caption = element_text(face = "italic", color = "gray25"))
+        plot.caption = element_text(face = "italic", color = "gray25"),
+        plot.title = element_text(size = rel(1.5), face = "bold", color = "navyblue"),
+        plot.subtitle = element_text(size = 14, face = "italic", color = "royalblue"),
+        axis.title.y = element_text(size = 14, face = "bold", color = "navyblue"), 
+        axis.title.x = element_text(size = 12, face = "bold", color = "navyblue"),
+        
+        strip.text = element_text(face = "bold", size = rel(1.1), hjust = 0, color = "navyblue"))
 
 p
 ```
