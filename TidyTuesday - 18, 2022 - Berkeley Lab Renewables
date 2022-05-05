@@ -1,0 +1,73 @@
+---
+title: "Solar/Wind utilities"
+date: 2022-05-05
+output: html_notebook
+---
+### Get the Data
+```{r}
+
+average_cost <- read_csv("2022-W18/average_cost.csv")
+wind  <- read_csv("2022-W18/wind.csv")
+solar  <- read_csv("2022-W18/solar.csv")
+capacity  <- read_csv("2022-W18/capacity.csv")
+```
+### Neccessary libraries
+```{r}
+library(tidyverse)
+library(readxl)
+library(skimr)
+library(lubridate)
+library(scales)
+library(grid)
+```
+
+### Skim the data
+```{r}
+skim(average_cost)
+head(average_cost)
+```
+
+```{r}
+head(wind)
+head(solar)
+head(capacity)
+```
+### Make a humble data viz
+```{r fig.height=6, fig.width=8}
+my_caption <- "#TidyTuesday week 18 | Berkley Lab data | @TimurZolkin"
+
+grob <- grobTree(textGrob("Parity with gas", x=0.5,  y=0.4, hjust=0,
+  gp=gpar(col="gray25", fontsize=10, fontface="italic")))
+
+p <- average_cost %>% 
+  mutate(Solar = solar_mwh/gas_mwh, Wind = wind_mwh/gas_mwh) %>%
+  select(c(year, Solar, Wind)) %>% 
+  pivot_longer(-year) %>%
+  ggplot(aes(x= factor(year), y= value, fill  = name)) +
+  geom_bar(stat="identity", position=position_dodge(), alpha= 0.7)+
+  geom_hline(yintercept = 1, color = "black", 
+             lwd = 0.5, linetype = "dotted") +
+  annotation_custom(grob) +
+
+  facet_wrap(~ name) +
+  scale_fill_brewer(palette="Pastel1", 
+                    labels=c('Solar', 'Wind'), guide="none") +
+  scale_x_discrete(breaks = seq(2009, 2021, 3)) +
+  labs(x = "Year", y = "Renewables costs compared to gas",
+       title = "Berkeley Lab’s Utility-Scale Solar, 2021",
+       subtitle = "Are renewables getting pricier again?",
+       caption = my_caption) +
+  theme_minimal() +
+  theme(axis.text = element_text(face = "bold"),
+        plot.caption = element_text(face = "italic", color = "gray25"))
+
+p
+```
+
+
+```{r}
+png(file="saving_plot2.png",
+width=600, height=350)
+p
+dev.off()
+```
