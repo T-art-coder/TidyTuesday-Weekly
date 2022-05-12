@@ -160,7 +160,7 @@ ggplotly(weighted_graph)
 
 Make annotations studying the data
 ```{r fig.height=8, fig.width=10}
-my_caption <- "#TidyTuesday week 19 | Berkley Lab data | @TimurZolkin"
+my_caption <- "#TidyTuesday week 19 | NY Times bestsellers | @TimurZolkin"
 
 
 
