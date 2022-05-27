@@ -1,8 +1,5 @@
 # TidyTuesday-Weekly
 Repo for regular contributions in TidyTuesday project.
-![rugby_outcomes](https://user-images.githubusercontent.com/58591530/170667397-965c6b5b-cbed-49a3-bf36-c155d39b4bc3.png)
-
-
 
 My contributions to [#TidyTuesday](https://github.com/rfordatascience/tidytuesday) challenge, a weekly social data project by [Thomas Mock](https://thomasmock.netlify.com/) and [R4DS Online Learning Community](https://twitter.com/r4dscommunity) that focuses on data wrangling and visualisation. More information about #TidyTuesday is available at: [https://github.com/rfordatascience/tidytuesday#readme](https://github.com/rfordatascience/tidytuesday#readme).
 
