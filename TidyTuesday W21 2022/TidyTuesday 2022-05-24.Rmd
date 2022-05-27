@@ -185,3 +185,72 @@ tab_end
 tab_end %>% gtsave(filename =  "mytab2.png")
 ```
 
+```{r}
+fifteens_raw <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-24/fifteens.csv')
+
+head(fifteens_raw)
+```
+
+```{r}
+fifteen_wl <- fifteens_raw %>% pivot_longer(c("team_1", "team_2")) %>%
+  pivot_longer(score_1: score_2, names_to = "team_score", values_to = "score") %>%
+  filter(!(name=="team_1"& team_score=="score_2"),!(name=="team_2"& team_score=="score_1")) %>%
+  group_by(value) %>%
+  mutate(id = row_number(), win_lose = case_when(value == winner ~ 1, TRUE ~ 0)) %>%
+  rename(team = value) %>%
+  filter(tournament == "World Cup")
+
+
+```
+
+```{r}
+w_outcomes <- fifteen_wl %>% group_by(winner) %>%
+  summarise(Wins = length(win_lose[win_lose == 1]),
+            Losses = length(win_lose[win_lose == 1]),
+            outcomes = list(win_lose), .groups = "drop") %>%
+  select(winner, outcomes)
+
+w_outcomes
+```
+
+```{r}
+tab_gt_with_outcomes <- tab %>%
+  left_join(w_outcomes, by = "winner") %>%
+  gt() %>%
+  gt_theme_nytimes() %>% 
+  tab_header(title = "Women's Rugby World Cup Statistics",
+             subtitle = md("**English Speaking Countries Dominate The Scene**")) %>%
+  fmt_number(columns = winner_lead,
+             decimals = 0,
+             pattern = "{x} X"
+             ) %>%
+   cols_label(winner_score = "Average Score",  
+             my_sum = "Wins",
+             winner_lead = "Average Lead",
+             winner = "") %>%
+  tab_style(locations = 
+              cells_title(groups = "title"),
+            style = list(
+              cell_text(font = google_font(name = "Bebas Neue"),
+              size = 'xx-large',
+              color = 'indianred'
+              )))%>%
+  tab_options(
+    heading.subtitle.font.size = "medium"
+  ) %>%
+  gt_img_rows(columns = Country, height = 20) %>%
+  # gt_merge_stack(col1 = winner, col2 = Country) %>%
+ tab_source_note(source_note = "#TidyTuesday week 21 | Data from ScrumQueens on Women's Rugby | @TimurZolkin") %>%
+  gt_plt_winloss(outcomes, max_wins = 31) %>%
+  cols_width(Country ~ px(100),
+             winner ~ px(100),
+             my_sum ~ px(100),
+             winner_lead ~ px(100),
+             winner_score ~ px(100), 
+             outcomes ~ px(200))
+
+tab_gt_with_outcomes
+```
+```{r}
+tab_gt_with_outcomes %>% gtsave(filename =  "rugby_outcomes.png")
+```
