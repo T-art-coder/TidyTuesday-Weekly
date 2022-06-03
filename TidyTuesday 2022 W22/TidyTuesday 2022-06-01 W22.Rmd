@@ -1,0 +1,271 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+install.packages("tidytuesdayR")
+```
+
+```{r}
+poll <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/poll.csv')
+
+reputation <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-05-31/reputation.csv')
+
+```
+
+```{r}
+head(poll)
+head(reputation)
+```
+
+```{r}
+poll %>% select(industry) %>% distinct()
+```
+## Web-scrapping and cleaning
+
+```{r}
+# install.packages("rvest")
+# install.packages("jsonlite")
+
+library(rvest) # fpr web scrapping
+library(tidyverse)
+library(jsonlite)
+library(gt)
+library(gtExtras)
+```
+
+На русском о rvest
+-- Наука о данных для гуманитарных исследований https://agricolamz.github.io/DS_for_DH/сбор-данных-из-интернета-rvest.html
+
+-- Копирование данных с веб-сайта с помощью R и библиотеки rvest
+
+-- http://dkhramov.dp.ua/images/edu/Stu.WebMining/ch11_rvest.pdf
+
+```{r}
+tab_url <- "https://graphics.axios.com/2022-05-16-harris-poll/index.html?initialWidth=469&childId=av-2022-05-16-harris-poll-69AC2&parentTitle=The%202022%20Axios%20Harris%20Poll%20100%20reputation%20rankings&parentUrl=https%3A%2F%2Fwww.axios.com%2F2022%2F05%2F24%2F2022-axios-harris-poll-100-rankings"
+
+tab_js <- "https://graphics.axios.com/2022-05-16-harris-poll/js/app.a8dd96951f9ea55e4346.min.js?a8dd96951f9ea55e4346"
+
+```
+
+```{r}
+raw_txt <- readLines(tab_js)
+
+head(raw_txt)
+```
+
+```{r}
+raw_json <- raw_txt |> 
+  paste0(collapse = '') |> 
+  gsub(
+    x = _, 
+    pattern = ".*o\\(M,n\\)\\}\\},function\\(n\\)\\{n\\.exports=JSON\\.parse\\('",
+    replacement = ""
+  ) |> 
+  gsub(
+    x = _,
+    pattern = "'\\)\\},function\\(n,t,r\\)\\{n\\.exports.*",
+    replacement = ""
+  ) |> 
+  str_remove_all("\\\\")
+
+raw_json
+```
+
+```{r}
+json_out <- jsonlite::fromJSON(raw_json, simplifyVector = FALSE)
+
+```
+
+```{r}
+raw_df <- json_out |> 
+  tibble(data = _) |> 
+  # unnest - unnests list of values into columns
+  unnest_wider(data)
+
+glimpse(raw_df)
+```
+
+```{r}
+raw_df |> 
+  write_rds("axios-harris-poll.rds")
+```
+
+```{r}
+raw_df |> head()
+  
+```
+
+```{r}
+js_df <-raw_df |> 
+  unnest_longer(history) |>
+  unnest_wider(history) |>
+  select(-dimensions)
+```
+
+```{r}
+js_df |> write_csv("2022/2022-05-31/axios.csv")
+```
+
+```{r}
+axios_vars <- raw_df |> 
+  select(-history) |> 
+  unnest_wider(dimensions) |> 
+  pivot_longer(names_to = 'name', values_to = 'vals', cols = TRUST:CULTURE) |> 
+  unnest_wider(vals)
+```
+
+```{r}
+axios_vars |> 
+  select(company, industry, name, score, rank) |>   write_csv("2022/2022-05-31/reputation.csv")
+```
+
+```{r}
+raw_df |> 
+  select(-history, -dimensions) |> 
+  rename(change_icon = change) |> 
+  head(20) |> 
+  gt::gt()
+```
+## Viz
+```{r}
+library(tidyverse)
+head(poll)
+head(reputation)
+```
+
+```{r}
+reputation %>% select(industry) %>% distinct()
+
+reputation %>% select(name) %>% distinct()
+```
+
+```{r}
+industry_summary <- reputation %>% select(-rank) %>%
+  pivot_wider(names_from = name, values_from = score) %>%
+  unnest() %>%
+  select(-company) %>%
+  group_by(industry) %>%
+  summarise_all(mean)
+
+head(industry_summary)
+```
+
+
+```{r}
+library(scales)
+df_scaled <- cbind(industry_summary[, 1], 
+                   round(apply(industry_summary[,2:8], 2, scales::rescale), 2))
+head(df_scaled)
+```
+```{r}
+df_scaled <- as.data.frame(df_scaled)
+df_scaled
+```
+
+
+```{r}
+# Variables summary
+# Get the minimum and the max of every column  
+col_max <- apply(df_scaled, 2, max)
+col_min <- apply(df_scaled, 2, min)
+
+# Calculate the average profile 
+# Put together the summary of columns
+col_summary <- t(data.frame(Max = col_max, Min = col_min))
+
+df_scaled2 <- as.data.frame(rbind(col_summary, df_scaled))
+
+head(df_scaled2)
+```
+
+
+```{r}
+industry_names <- df_scaled2 %>% select(industry) 
+industry_names
+
+df_scaled2 <- df_scaled2 %>% select(-industry)
+df_scaled2
+```
+### Spider/Web Chart
+Let's consider use of radar/spider chart for this ranking/poll data. Though radar charts have their pitfalls, they can carry some value this time.
+```{r}
+library(tidyverse)
+library(viridis)
+library(patchwork)
+library(hrbrthemes)
+library(fmsb)
+library(colormap)
+```
+
+```{r}
+df_scaled2 <- df_scaled2  %>% 
+  mutate_if(is.character,as.numeric) 
+
+head(df_scaled2)
+```
+
+```{r}
+cbind(industry_names, df_scaled2)
+```
+```{r}
+industry_names[4, ]
+```
+```{r}
+df_scaled2[c(1,2,1+2),]
+```
+
+
+```{r fig.height=6.5, fig.width=12}
+colors_border=colormap(colormap=colormaps$viridis, nshades=6, alpha=0.4)
+colors_in=colormap(colormap=colormaps$cool, nshades=6, alpha=0.3)
+
+
+# Split the screen in 6 parts
+par(mar=rep(3,4))
+par(mfrow=c(2,3))
+
+
+
+# Loop for each plot
+for(i in 1:6){
+  radarchart( df_scaled2[c(1,2,i+2),], axistype=1,
+  pcol = colors_border[i],
+  pfcol = colors_in[i],
+  plwd = 4,
+  plty = 1,
+  cglty = 2,
+  # labels for axis
+  cglcol = "grey",
+  axislabcol = "black",
+  caxislabels = seq(0, 100, 25),
+  cglwd = 1,
+  vlcex = 1,
+  title = industry_names[i+2, ]
+  )
+  
+  
+
+}
+#title("Main Title", outer = TRUE)
+
+#mtext("Flying High? Airlines reputation dramatically lags behind its peers"), side = 3, line = -23, outer = TRUE, family = "HersheySerif")
+
+mtext("Flying High? Airline industry reputation dramatically lags behind its peers ", side = 3, line = -23, outer = TRUE, family = "HersheySerif", font = 2, col = "darkblue",
+      cex = 1.2)
+
+mtext("TidyTuesday 2022 W22 | Axios and Harris Poll 2022 | @TimurZolkin", side = 3, line = -48, outer = TRUE, family = "HersheySerif", font = 2, col = "gray50",
+      cex = 1)
+
+
+
+
+```
+
+
+
+```{r}
+
+```
+
