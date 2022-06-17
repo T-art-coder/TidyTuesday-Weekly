@@ -9,8 +9,17 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
 <details open>
   <summary><b>2022</b></summary>
 
+   <!-- toc -->
+* 2022 [US Draught Data]((https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)) 
+
+  ![droughts](https://user-images.githubusercontent.com/58591530/174244483-f58acaa7-ae34-41dc-a62e-e7c89ff0bb89.png)
+
+  
+  * 2022 [Pride sponsors donations to Anti-LGBT campaigns]((https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W23))   
+  ![TidyTueday W23](https://user-images.githubusercontent.com/58591530/174245980-e5c2186e-eccd-4799-ab88-bd514b729135.png)
+
   <!-- toc -->
-* 2022 [Axios and Harris Poll 2022]([[https://github.com/leeolney3/TidyTuesday/tree/main/2022/week_21](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-05-31)))   
+* 2022 [Axios and Harris Poll 2022]((https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022](https://github.com/rfordatascience/tidytuesday/tree/master/data/2022/2022-05-31)))   
   
 <!-- tocstop -->
 </details>
@@ -20,7 +29,7 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
   
   
 <!-- toc -->
-* 2022 [Women's Rugby]([https://github.com/leeolney3/TidyTuesday/tree/main/2022/week_21](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022))   
+* 2022 [Women's Rugby]((https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022))   
   
 <!-- tocstop -->
 </details>
