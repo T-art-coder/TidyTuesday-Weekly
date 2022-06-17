@@ -1,0 +1,108 @@
+---
+title: "TidyTuesday Week 24"
+output: html_notebook
+---
+## Import libraries
+```{r}
+library(showtext)
+library(tidytuesdayR)
+library(tidyverse)
+library(lubridate)
+```
+
+## Install MetBrewer for color palettes
+```{r}
+library(MetBrewer)
+OKeeffe1 <- met.brewer("OKeeffe1", n = 10, type = "continuous")
+```
+
+## Import Data
+```{r}
+drought <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-14/drought.csv')
+drought_fips <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-06-14/drought-fips.csv')
+
+```
+
+```{r}
+head(drought)
+head(drought_fips)
+```
+## Data Cleaning
+
+Source: https://github.com/KittJonathan/tidytuesday/blob/master/R/2022_06_14_drought.R
+
+```{r}
+drought_clean <- drought %>%
+  mutate(date = str_remove(DATE, "d_"),
+         ymd = ymd(date),
+         year = year(ymd)) %>%
+  select(year, D0:D4, W0:W4)
+
+drought_clean <- drought_clean %>%
+  pivot_longer(cols = -year, names_to = "condition", values_to = "value") %>%
+  group_by(year, condition) %>%
+  summarise(mean_value = mean(value, na.rm = TRUE)) %>% 
+  mutate(mean_value = case_when(condition %in% c("W0", "W1", "W2", "W3", "W4") ~ -mean_value,
+                                TRUE ~ mean_value)
+         )
+
+drought_clean
+```
+
+## Data Viz
+
+check available fonts
+```{r}
+font.files() 
+```
+
+```{r fig.height=20, fig.width=40}
+p <- ggplot(data = filter(drought_clean, year >= 1990),
+       mapping = aes(x = year, y = mean_value, fill = condition)) +
+  geom_area(show.legend = FALSE) +
+  # let's use colorblind-friendly color palette based on the O'Keeffe art piece
+  scale_fill_manual(values = OKeeffe1) +
+  scale_x_continuous(breaks = seq(1990, 2020, 5)) +
+  labs(title = "Drought conditions in the U.S. (1990-2022)",
+       caption = "TidyTuesday Week 24 | US National Integrated Drought Information System | @TimurZolkin") +
+  geom_text(aes(x = 2011, y = 115, label = "2011 Arab Spring amidst draughts in\nRussia, China and the US"),
+            family = "Roboto Condensed Light", colour = "rosybrown", hjust = 0, size = 15)+
+  geom_text(aes(x = 1991, y = 120, label = "Drier conditions"),
+            family = "Roboto Condensed Light", colour = "saddlebrown", hjust = 0, size = 20, alpha = 0.5)+
+  geom_text(aes(x = 1991, y = -150, label = "Wetter conditions"),
+            family = "Roboto Condensed Light", colour = "steelblue1", hjust = 0, size = 20, alpha = 0.5) +
+  theme_minimal(base_size = 35) +
+  theme(panel.grid.major = element_blank(),
+        panel.grid.minor = element_blank(),
+        axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        axis.line.y = element_blank(),
+        axis.text.y.left = element_blank(),
+        axis.text.x=element_text(size=40),
+        plot.title = element_text(family = "Roboto Condensed Medium", 
+                                  colour = "firebrick1",
+                                  size = 80, 
+                                  hjust = 0.5,
+                                  margin = margin(t = 10)
+                                  ),
+        plot.subtitle = element_text(family = "Roboto Condensed Light", 
+                                     colour = "gray59", 
+                                     size = 65, 
+                                     hjust = 0.5,
+                                     margin = margin(t = 10, b = 5)
+                                     ),
+        plot.caption = element_text(family = "Roboto",
+                                    colour = "grey20", 
+                                    size = 28, 
+                                    hjust = 0.5,
+                                    vjust = -1,
+                                    margin = margin(t = 5, b = 5)))
+
+  
+
+p
+
+```
+
+
+
