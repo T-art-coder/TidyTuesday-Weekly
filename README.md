@@ -11,27 +11,18 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
 
    <!-- toc -->
 * [US Draught Data](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
-
   ![droughts](https://user-images.githubusercontent.com/58591530/174244483-f58acaa7-ae34-41dc-a62e-e7c89ff0bb89.png)
 
-  
-  * [Pride sponsors donations to Anti-LGBT campaigns] (https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W23)   
+  * [Pride sponsors donations to Anti-LGBT campaigns](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W23)   
   ![TidyTueday W23](https://user-images.githubusercontent.com/58591530/174245980-e5c2186e-eccd-4799-ab88-bd514b729135.png)
 
   <!-- toc -->
-* 2022 [Axios and Harris Poll 2022] (https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%202022%20W22)
-  
-<!-- tocstop -->
-</details>
-
+* [Axios and Harris Poll 2022](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%202022%20W22)
   ![TidyTuesday 2022 W22](https://user-images.githubusercontent.com/58591530/171868790-207131d0-8719-4cbf-a32a-114f9d6d12a3.png)
 
-  
-  
 <!-- toc -->
-* 2022 [Women's Rugby](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022)   
-  
+* [Women's Rugby](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/TidyTuesday%20W21%202022)   
+![rugby_outcomes](https://user-images.githubusercontent.com/58591530/170667943-1c202323-a21c-4619-9282-9280b5874dad.png)
+
 <!-- tocstop -->
 </details>
-
-![rugby_outcomes](https://user-images.githubusercontent.com/58591530/170667943-1c202323-a21c-4619-9282-9280b5874dad.png)
