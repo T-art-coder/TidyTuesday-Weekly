@@ -1,0 +1,221 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+Author: @TimurZolkin
+TidyTuesday 21.06.2022
+Theme: Black Independence Day
+```{r}
+#install.packages("png")
+#install.packages("magick")
+#install.packages("cowplot")
+#install.packages("patchwork")
+#install.packages("ggtext")
+#install.packages("glue")
+#devtools::install_github("lchiffon/wordcloud2")
+#install.packages("webshot")
+#install.packages("tidytext")
+#install.packages("htmlwidgets")
+
+library(wordcloud2)
+library(png)
+library(patchwork)
+library(grid)
+library(ggtext)
+library(glue)
+library(tidyverse)
+library(skimr)
+library(tidytext)
+library(webshot)
+library(htmlwidgets)
+```
+## packages for wordcloud
+```{r eval=FALSE, include=FALSE}
+
+library("glue")
+library("usethis")
+library("htmltools")
+library("rlang")
+library("tm")
+library("SnowballC")
+
+library("usethis")
+library("htmltools")
+library("NLP")
+library("tm")
+library("RColorBrewer")
+library("SnowballC")
+library("wordcloud")
+library("RColorBrewer")
+#library("pdftools")
+library("plotly")
+library("tidyverse")
+library("jsonlite")
+library("devtools")
+devtools::install_github("lchiffon/wordcloud2", force=TRUE)
+library(wordcloud2)
+```
+
+## Download Data
+```{r}
+blackpast <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-16/blackpast.csv')
+census <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-16/census.csv')
+slave_routes <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-16/slave_routes.csv')
+african_names <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2020/2020-06-16/african_names.csv')
+
+```
+
+```{r}
+skim(blackpast)
+blackpast
+
+## Идеи
+# Можно совместить надписи и события с каким-то общим простым линейным графиком
+# Можно сделать WordCloud при жеании
+```
+
+## Data Cleaning!
+```{r}
+# Step 1. Select events from the blackpast data table.
+text_twc_r <- blackpast %>% filter(era == c("1901-2000", "2001-")) %>% select(events)
+text_twc_r
+```
+
+```{r}
+# Step 2. Delete all numbers from the text
+text_twc_r <- text_twc_r %>% mutate(events = gsub(x = events, pattern = "[0-2000]+|[[:punct:]]|\\(.*\\)", replacement = ""))
+```
+
+
+```{r}
+# Step 3. Unnest data to get one row one word format
+text_twc_c <- text_twc_r %>% unnest_tokens(word, events)
+text_twc_c
+```
+
+```{r}
+# Step 4.1 delete common words
+data(stop_words)
+
+text_twc_c <- text_twc_c %>% anti_join(stop_words) 
+text_twc_c
+```
+
+```{r}
+# Step 4.2 delete some common typos and useless words
+
+list_to_delete <- c("33","33rd","34","35th","3carl","3hulan","3robert","4","45","476577","4879878","4barack","4rev","4th","5","544937","54mile","569736","5889","5alpha","5mervyn","5muhammad","6","648349","65485","69","6coleman","6reginald","6ron","6the","7","77546","78","793375","7l","7marian","8","869","88783","8943","8bobby","8henry","8julian","8wellington","9","93","9345","936","938","95","96","964is","966","967","968","968which","97","976","98","987763","99","99866","99th","9barbara","9hattie","9ossian","9s","9th","9thomas","9which")
+
+words_to_delete <- tibble(word = list_to_delete)
+```
+
+
+```{r}
+text_twc_c <- text_twc_c %>% anti_join(words_to_delete)
+
+text_twc_c
+```
+
+```{r}
+# Step 5. Summarize data by counting appearances of words
+text_twc_c <- text_twc_c %>% group_by(word) %>% summarise(n = n()) 
+text_twc_c %>% View()
+
+```
+
+```{r}
+text_clean <- text_twc_c %>% filter(word != "3")
+```
+
+
+```{r}
+text_clean <- text_twc_c %>% filter(word != "3")
+
+text_clean <- text_clean %>% rename(freq = n)
+
+text_clean <- data.frame(word = text_clean$word, freq = text_clean$freq)
+```
+
+```{r}
+# Step 6. Delete month names
+months_to_delete <- c("january", "february", "march", "april", "may", "june", "july", "august", "september",
+                      "october", "november", "december")
+
+months_to_delete <- tibble(word = months_to_delete)
+
+text_clean <- text_clean %>% anti_join(months_to_delete) %>% filter(freq > 2)
+
+head(text_clean)
+```
+
+## DataViz
+```{r}
+# Let's test a letterCloud
+letterCloud(text_clean,"BLM", letterFont = 5, wordSize = 2, color = "skyblue", backgroundColor="black")
+```
+
+
+```{r}
+# test wordcloud
+wordcloud2(text_clean, size=1.6, color=OKeeffe1 )
+```
+
+
+```{r}
+my_graph <- letterCloud(text_clean,"BLM", letterFont = 1, wordSize = 1, widgetsize = c(550,550),
+                        color = "skyblue", backgroundColor="black",
+                        fontFamily = "Roboto Condensed Light")
+
+#saveWidget(my_graph,"tmp.html",selfcontained = F)
+```
+
+
+```{r}
+saveWidget(my_graph,"tmp.html",selfcontained = TRUE)
+webshot("tmp.html","fig_1.pdf", delay =5, vwidth = 480, vheight=480)
+```
+
+
+```{r}
+# Here I save my_graph from the Viewer panel through Google Chrome
+# Thanks to https://github.com/Pecners/tidytuesday/blob/master/2022/2022-05-17/final_plot.R 
+img <- readPNG("BLM pic.png")
+g <- rasterGrob(img, interpolate=TRUE)
+```
+
+
+Minute of history: 
+On June 19, 1865, Major General Gordon Granger arrived in Galveston, TX, and announced the end of the Civil War and the end of slavery
+
+```{r fig.height=6, fig.width=6}
+p <- qplot(0:10, 0:10, geom="blank") +
+  cowplot::draw_image(img, x = 0, y = 0, width = 10, height = 10) + 
+  geom_textbox(data = tibble(1), minwidth = unit(4, "in"),
+               x = 1.4, y = 9, hjust = 0, vjust = 1,
+           size = unit(8, "pt"), lineheight = .7, color = "firebrick1", 
+           family = "Noto Serif",
+           fill = "black", box.colour = "black",
+           label = "What lies in BlackPast?",
+           box.padding = margin(5,0,2,5)) + 
+  theme_classic() +
+  theme(axis.text = element_blank(),
+        axis.line = element_blank(),
+        axis.ticks = element_blank(),
+        axis.title = element_blank()) +
+  annotate(geom = "text", x = 4.3, y = .2, hjust = 0, vjust = 0,
+           family = "Noto Serif", color = "floralwhite", size = 3,
+           label = glue("TidyTuesday W25 | BlackPast Data | ",
+                        "@TimurZolkin")) +
+   annotate(geom = "text", x = 2.7, y = 1.2, hjust = 0, vjust = 0,
+           family = "Noto Serif", 
+           color = "firebrick1", 
+           size = 5,
+           label = "               19th June\nBlack Independence Day",
+   
+                                )
+ggsave(filename = "BLM_final_plot.png", bg = "black",
+       w = 6, h = 6)
+```
+
+
