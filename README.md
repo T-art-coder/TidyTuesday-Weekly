@@ -9,6 +9,11 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
 <details open>
   <summary><b>2022</b></summary>
 
+  <!-- toc -->
+* [](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
+![image](https://user-images.githubusercontent.com/58591530/176244565-489b5984-9274-4e16-862b-1e1fa5096c34.png)
+  
+  
    <!-- toc -->
 * [US Draught Data](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
   ![droughts](https://user-images.githubusercontent.com/58591530/174244483-f58acaa7-ae34-41dc-a62e-e7c89ff0bb89.png)
