@@ -10,7 +10,7 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
   <summary><b>2022</b></summary>
 
   <!-- toc -->
-* [](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
+* [Juneteenth](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
 ![image](https://user-images.githubusercontent.com/58591530/176244565-489b5984-9274-4e16-862b-1e1fa5096c34.png)
   
   
