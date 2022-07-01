@@ -1,0 +1,237 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+library(tidyverse)
+library(lubridate)
+```
+
+```{r}
+tuesdata <- tidytuesdayR::tt_load('2022-06-28')
+tuesdata <- tidytuesdayR::tt_load(2022, week = 26)
+
+paygap <- tuesdata$paygap
+```
+
+```{r}
+head(paygap)
+```
+
+
+```{r}
+paygap %>% filter(str_detect(current_name, "AIRWAYS")) %>% distinct()
+```
+
+```{r}
+paygap %>% filter(str_detect(current_name, "Ryanair"))
+
+paygap %>% filter(str_detect(current_name, "Jet"))
+
+paygap %>% filter(str_detect(current_name, "WIZZ AIR"))
+```
+
+## Pick UK airlines
+```{r}
+br_air_list <- tibble(employer_name = c("AMERICAN AIRLINES, INC.",
+      "BRITISH AIRWAYS PLC", "UNITED AIRLINES INC",
+      "CATHAY PACIFIC AIRWAYS LIMITED", "EASTERN AIRWAYS (UK) LIMITED",
+      "THOMSON AIRWAYS LIMITED", "TUI AIRWAYS LIMITED", 
+      "VIRGIN ATLANTIC AIRWAYS LIMITED", "WIZZ AIR UK LIMITED", "Easyjet Airline Co. Ltd.", "JET2.COM LIMITED", "EASYJET AIRLINE COMPANY LIMITED", "EASYJET UK LIMITED, JET2 PLC", "WIZZ AIR UK LIMITED", "Ryanair ltd"
+                                        ))
+
+br_air_list
+```
+
+
+```{r}
+br_airlines_r <- paygap %>% 
+  inner_join(br_air_list, by = "employer_name")
+
+br_airlines_r
+```
+
+
+
+```{r}
+br_airlines_r <- br_airlines_r %>%  mutate(
+  employer_name = str_to_title(employer_name)
+)
+```
+
+
+```{r}
+#pivot to long_format
+
+
+br_airlines_long <- br_airlines_r %>%
+  filter(due_date == "2021-10-06") %>%
+  select(employer_name, employer_size, female_bonus_percent, male_bonus_percent) %>%
+  mutate(bonus_diff = abs(male_bonus_percent - female_bonus_percent)) %>%
+ arrange(desc(bonus_diff)) %>%
+    pivot_longer(cols=c('female_bonus_percent', 'male_bonus_percent'),
+               names_to='gender',
+               values_to='bonus_percent') %>% 
+  mutate(gender = as_factor(gender)) %>%
+  # drop duplicate values for Wizz Air
+  distinct() 
+
+
+br_airlines_long
+```
+
+```{r}
+# Thank you for flying our Airlines!
+# Welcome on board!
+```
+
+```{r}
+library(ggtext)
+library(showtext)
+
+showtext_opts(dpi = 300)
+showtext_auto(enable = TRUE)
+```
+
+
+```{r}
+font_files()
+```
+
+```{r}
+br_airlines_long_c <- br_airlines_long %>% filter(gender == "female_bonus_percent") %>% 
+  mutate(female_bonus = bonus_percent, 
+         male_bonus = female_bonus - bonus_diff) %>% 
+  arrange(bonus_diff) %>% 
+  drop_na(male_bonus)
+
+br_airlines_long_c
+```
+
+## Data Cleaning
+```{r}
+br_airlines_long_c$employer_name <- gsub("Limited|Plc|Ltd|UK|Plc|Inc|[.,]|[()]|Company", "", as.character(br_airlines_long_c$employer_name))
+
+br_airlines_long_c <- br_airlines_long_c %>% mutate(employer_name = str_trim(employer_name)) %>% filter(employer_name != "Cathay Pacific Airways") %>% filter(employer_name != "Eastern Airways Uk")
+
+br_airlines_long_c
+```
+
+```{r}
+p <- br_airlines_long_c %>% arrange(desc(bonus_percent)) %>% mutate(employer_name = fct_reorder(employer_name, bonus_diff, .desc = TRUE)) %>%
+  ggplot() +
+  # cowplot::draw_image(img, x = 3, y = -5, width = 5, height = 10) +
+  geom_segment(aes(x = employer_name, xend = employer_name, y = male_bonus, yend = female_bonus), color = "navyblue") +
+  geom_point( aes(x=employer_name, y=male_bonus), color=rgb(0.2,0.7,0.1,0.5), size=3 ) +
+  geom_point( aes(x=employer_name, y=female_bonus), color=rgb(0.7,0.2,0.1,0.5), size=3 ) +
+  coord_flip() + 
+  theme_minimal() +
+  labs(y = "Mean Bonuses, %",
+       title = "Flying Colors:",
+       subtitle = "Gender Pay Gap in UK Airlines Persists",
+       caption = "#TidyTuesday W-26 | UK Gov Gender Pay Gap Service | @TimurZolkin") +
+  theme(plot.title = element_text(family = "Nimbus Mono PS", 
+                                  colour = "NavyBlue",
+                                  size = 26, 
+                                  hjust = 0 ,
+                                  margin = margin(t = 10),
+                                  face = "bold"
+                                  ),
+        plot.subtitle = element_text(family = "Nimbus Mono PS", 
+                                  colour = "gray10",
+                                  size = 16, face = "bold"),
+        axis.title.y = element_blank(),
+        axis.text.y = element_text(family = "Nimbus Mono PS",
+                                   colour = "grey10", size = 12),
+        axis.title.x = element_text(family = "Nimbus Mono PS",
+                                   colour = "grey10", size = 12),
+        plot.caption = element_text(hjust = -1, vjust = -1, color = "grey69"),
+        panel.grid = element_blank())
+```
+
+```{r}
+library("glue")
+library("usethis")
+library("htmltools")
+library("rlang")
+library("tm")
+library("SnowballC")
+library("devtools")
+```
+
+```{r}
+install.packages("png")
+
+library(png)
+
+library(grid)
+
+install.packages("cowplot")
+
+install.packages("magick")
+```
+
+```{r}
+img <- readPNG("Airplane2.png")
+g <- rasterGrob(img, interpolate=TRUE)
+```
+
+```{r}
+img_graph <- p + inset_element(
+  p  = g, left = 0, bottom = 0.75, right = 0.5, top = 0.9 ) +
+  inset_element(
+  p  = g, left = 0.2, bottom = 0.55, right = 0.7, top = 0.7 )
+
+print(img_graph)
+
+```
+
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
+
+```{r}
+
+```
