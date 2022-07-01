@@ -119,6 +119,27 @@ br_airlines_long_c
 ```
 
 ```{r}
+library(ggtext)
+```
+
+```{r}
+
+```
+
+
+```{r}
+annotation <- data.frame(
+   x = c(3.5),
+   y = c(13),
+   label = "Female employee"
+)
+
+annotation_m <- data.frame(
+   x = c(3.5),
+   y = c(60),
+   label = "Male employee"
+)
+
 p <- br_airlines_long_c %>% arrange(desc(bonus_percent)) %>% mutate(employer_name = fct_reorder(employer_name, bonus_diff, .desc = TRUE)) %>%
   ggplot() +
   # cowplot::draw_image(img, x = 3, y = -5, width = 5, height = 10) +
@@ -128,9 +149,9 @@ p <- br_airlines_long_c %>% arrange(desc(bonus_percent)) %>% mutate(employer_nam
   coord_flip() + 
   theme_minimal() +
   labs(y = "Mean Bonuses, %",
-       title = "Flying Colors:",
-       subtitle = "Gender Pay Gap in UK Airlines Persists",
-       caption = "#TidyTuesday W-26 | UK Gov Gender Pay Gap Service | @TimurZolkin") +
+       title = "Flying Colors ",
+       subtitle = "Gender Pay Gap in the Airlines Persists",
+       caption = "#TidyTuesday W-26 | UK Gov. Gender Pay Gap Service | @TimurZolkin | 01.07.22") +
   theme(plot.title = element_text(family = "Nimbus Mono PS", 
                                   colour = "NavyBlue",
                                   size = 26, 
@@ -143,11 +164,26 @@ p <- br_airlines_long_c %>% arrange(desc(bonus_percent)) %>% mutate(employer_nam
                                   size = 16, face = "bold"),
         axis.title.y = element_blank(),
         axis.text.y = element_text(family = "Nimbus Mono PS",
-                                   colour = "grey10", size = 12),
+                                   colour = "grey10", size = 12, face = "bold"),
         axis.title.x = element_text(family = "Nimbus Mono PS",
-                                   colour = "grey10", size = 12),
+                                   colour = "grey10", size = 12, face = "bold"),
         plot.caption = element_text(hjust = -1, vjust = -1, color = "grey69"),
-        panel.grid = element_blank())
+        panel.grid = element_blank()) +
+  
+          geom_text(data= annotation, 
+                    aes(x=x, y=y, label=label),
+                    , 
+           color="limegreen", 
+           size=3.5 , angle=0, fontface="bold" ) +
+    geom_text(data= annotation_m, 
+                    aes(x=x, y=y, label=label),
+                    , 
+           color="tomato1", 
+           size=3.5 , angle=0, fontface="bold" )
+  
+
+
+p        
 ```
 
 ```{r}
