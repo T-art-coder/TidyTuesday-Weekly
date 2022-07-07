@@ -1,0 +1,349 @@
+---
+title: "TidyTuesday Home prices"
+output: html_document
+date: '2022-07-05'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+## 1. Download packages and data
+```{r}
+#install.packages("readr")
+#install.packages("lubridate")
+#install.packages("scales")
+#install.packages("tidyverse")
+#install.packages("skimr")
+#install.packages("corrplot")
+#install.packages("gridExtra")
+#install.packages("caret")
+#install.packages("GGally")
+
+
+library(corrplot)
+library(caret)
+library(gridExtra)
+library(skimr)
+library(tidyverse)
+library(lubridate)
+library(GGally)
+library(scales)
+```
+
+```{r}
+rent <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/rent.csv')
+permits <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/sf_permits.csv')
+new_construction <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-05/new_construction.csv')
+```
+
+## Exploratory Data Analysis
+### 2.1 Data Size and structure
+
+```{r}
+skim(permits)
+head(permits)
+```
+
+
+```{r}
+skim(rent)
+head(rent)
+```
+### 2.2 Exploring rent data
+```{r}
+my_pretty_theme <- theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        # Bold, bigger title
+        plot.title = element_text(face = "bold", size = rel(1.7)),
+        # Plain, slightly bigger subtitle that is grey
+        plot.subtitle = element_text(face = "plain", size = rel(1.3), color = "grey70"),
+        # Italic, smaller, grey caption that is left-aligned
+        plot.caption = element_text(face = "italic", size = rel(0.7), 
+                                    color = "gray50"),
+        # Bold legend titles
+        legend.title = element_text(face = "bold"),
+        # Bold, slightly larger facet titles that are left-aligned for the sake of repetition
+        strip.text = element_text(face = "bold", size = rel(1.1), hjust = 0),
+        # Bold axis titles
+        axis.title = element_text(face = "bold"),
+        # Add some space above the x-axis title and make it left-aligned
+        # axis.title.x = element_text(margin = margin(t = 10), hjust = 0),
+        # Add some space to the right of the y-axis title and make it top-aligned
+        axis.title.y = element_text(margin = margin(r = 10), hjust = 1),
+        # Add a light grey background to the facet titles, with no borders
+        strip.background = element_rect(fill = "grey90", color = NA),
+        # Add a thin grey border around all the plots to tie in the facet titles
+        panel.border = element_rect(color = "grey90", fill = NA))
+```
+
+
+```{r}
+caption <- "TidyTuesday 2022 W27 | K. Pennington Rental Housing Data | @TimirZolkin"
+
+rent_p <- rent[!is.na(rent$price), ] %>%
+  ggplot(aes(x = price)) +
+  geom_histogram(fill = "navyblue", binwidth = 300, alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 40000, by = 10000), labels = comma)+
+  geom_text(x = 35000, y = 10000, label = "Max value here", color = "tomato1")+
+  labs(title = "Rent price distribution, San Francisco",
+       caption = caption) +
+  my_pretty_theme +
+    theme(axis.title.y = element_blank())
+
+rent_p  
+#   geom_curve(aes(x = 35000, y = 9000, xend = 40000, yend = 0),
+#             arrow = arrow(length = unit(0.03, "npc")))+
+max(rent$price)
+```
+
+
+```{r}
+rent_exp_p <- rent[!is.na(rent$price), ] %>%
+  ggplot(aes(x = price)) +
+  geom_histogram(fill = "navyblue", binwidth = 300, alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 40000, by = 10000), labels = comma)+
+  coord_cartesian(ylim = c(0, 300), xlim = c(10000, 40000))+
+  labs(title = "High Rent price distribution, San Francisco",
+       caption = caption, colour = "grey79") +
+    my_pretty_theme +
+    theme(axis.title.y = element_blank())
+
+rent_very_exp_p <-  rent[!is.na(rent$price), ] %>%
+  ggplot(aes(x = price)) +
+  geom_histogram(fill = "navyblue", binwidth = 300, alpha = 0.8) +
+  scale_x_continuous(breaks = seq(0, 40000, by = 10000), labels = comma)+
+  coord_cartesian(ylim = c(0, 20), xlim = c(20000, 40000))+
+  #fill labs with "" to hold title and caption squares empty
+  labs(title = "", caption = "") +
+    my_pretty_theme +
+    theme(axis.title.y = element_blank())
+
+rent_exp_p
+```
+
+```{r}
+# install.packages("ggpubr")
+library(ggpubr)
+```
+
+```{r fig.height=6, fig.width=10}
+ggarrange(rent_exp_p, rent_very_exp_p,
+        ncol = 2, nrow = 1)
+```
+
+
+### 1.3 Correlation plots
+
+```{r}
+ggcorr(rent %>% select(where(is.numeric), -date, - year), palette = "RdBu", label = TRUE)
+```
+
+
+```{r}
+#index vector numeric variables
+numericVars <- which(sapply(rent, is.numeric))
+
+numericVarNames <- names(numericVars)
+cat('There are', length(numericVars), 'numeric variables')
+```
+source:https://www.kaggle.com/code/erikbruin/house-prices-lasso-xgboost-and-a-detailed-eda
+```{r}
+rent_numVar <- rent[, numericVars] %>% select(-date)
+cor_numVar <- cor(rent_numVar, use="pairwise.complete.obs") #correlations of all numeric variables
+
+#sort on decreasing correlations with SalePrice
+cor_sorted <- as.matrix(sort(cor_numVar[,'price'], decreasing = TRUE))
+ #select only high corelations
+CorHigh <- names(which(apply(cor_sorted, 1, function(x) abs(x)>0.2)))
+cor_numVar <- cor_numVar[CorHigh, CorHigh]
+
+CorHigh
+
+corrplot.mixed(cor_numVar, tl.col="black", tl.pos = "lt")
+```
+
+We see that rent.csv file gives us an overview of rent ads in SF for years 2003-2017. 
+
+Rent prices are somewhat related to number of beds, baths and apartment area as plots below are indicating.
+
+Obviously there is some information value in investigating appartment locaton and other variables.
+
+
+Room in apt variable in not very informative
+```{r}
+rent %>% select(room_in_apt) %>% count(room_in_apt)
+```
+
+```{r}
+summary(rent)
+```
+
+
+#### 2.2.1 Basic Linear regression diagnostics for rent data
+```{r}
+summary(lm(price ~ beds + baths +sqft, data = rent %>% filter(year == 2015)))
+```
+
+```{r}
+install.packages("car")
+library(car)
+```
+
+```{r}
+fit_rent_test <- lm(price ~ beds + baths +sqft, data = rent %>% filter(year == 2015))
+```
+
+```{r fig.height=6, fig.width=6}
+residualPlot(fit_rent_test)
+qqPlot(fit_rent_test)
+```
+
+```{r}
+plot(lm(price ~ beds + baths +sqft, data = rent %>% filter(year == 2015)))
+```
+#### 2.2.2 Exploring price of a room 
+
+```{r}
+rent <- rent %>% mutate(date = ymd(date))
+```
+
+```{r}
+rent <- rent %>% mutate(month_end = ceiling_date(date, "month") - days(1))
+head(rent)
+```
+
+
+```{r}
+#rent <- rent %>% mutate(y_quarter = quarter(date, with_year = T))
+rent <- rent %>% mutate(county = str_to_title(county))
+
+skim(rent)
+```
+
+```{r}
+rent %>% filter(year == 2007)
+```
+
+
+Let's try to visualize rent price per sqft or room in different counties
+
+```{r}
+#install.packages("MetBrewer")
+#library(MetBrewer)
+MetBrewerpalette <- met.brewer("Hiroshige", n = 10, type = "discrete")
+```
+
+
+
+```{r}
+my_pretty_theme_2 <- theme_minimal(base_family = "Roboto Condensed", base_size = 12) +
+  theme(panel.grid.minor = element_blank(),
+        # Bold, bigger title
+        plot.title = element_text(face = "bold", size = rel(1.7)),
+        # Plain, slightly bigger subtitle that is grey
+        plot.subtitle = element_text(face = "plain", size = rel(1.3), color = "grey70"),
+        # Italic, smaller, grey caption that is left-aligned
+        plot.caption = element_text(face = "italic", size = rel(0.7), 
+                                    color = "grey70", hjust = 0),
+        # Bold legend titles
+        legend.title = element_text(face = "bold"),
+        # Bold, slightly larger facet titles that are left-aligned for the sake of repetition
+        strip.text = element_text(face = "bold", size = rel(1.1), hjust = 0),
+        # Bold axis titles
+        axis.title = element_text(face = "bold"),
+        # Add some space above the x-axis title and make it left-aligned
+        # axis.title.x = element_text(margin = margin(t = 10), hjust = 0),
+        # Add some space to the right of the y-axis title and make it top-aligned
+        #axis.title.y = element_text(margin = margin(r = 10), hjust = 1),
+        # Add a light grey background to the facet titles, with no borders
+        strip.background = element_rect(fill = "grey90", color = NA),
+        # Add a thin grey border around all the plots to tie in the facet titles
+        panel.border = element_rect(color = "grey90", fill = NA))
+```
+
+
+```{r fig.height=6, fig.width=10}
+p <- rent[!is.na(rent$price), ] %>%
+  #filter(year == 2018) %>%
+  drop_na(county) %>%
+  group_by(year, county) %>% summarise(price = mean(price)) %>%
+  ggplot(aes(x = year, y = price, fill = county)) +
+  geom_col()+
+  facet_wrap(~county, ncol = 2) +
+  scale_fill_manual(values = MetBrewerpalette) +
+  scale_y_continuous(breaks = c(0, 2000, 4000), labels=scales::dollar_format())+
+  scale_x_continuous(breaks = c(2000, 2005, 2010, 2015, 2019))+
+  my_pretty_theme+
+  theme(axis.title.x = element_blank(),
+        axis.title.y = element_blank(),
+        panel.grid.major = element_blank(),
+        legend.position="none")+
+  labs(title = "Rental Housing in California: An Overview", subtitle = "Average rent prices based on Craiglist data, 2000-2019", caption = "TidyTuesday W-27 2022 | K. Pennington Rental Housing Data | by @TimirZolkin")
+    
+p  
+```
+
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+v
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+
+```{r}
+
+```
+
+vv
