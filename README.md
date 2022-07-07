@@ -10,6 +10,14 @@ My #TidyTuesday visualisations and code are shown below. Feedback is very welcom
   <summary><b>2022</b></summary>
 
   <!-- toc -->
+* [San Francisco Rental Housing Data](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W27)
+![image](https://github.com/T-art-coder/TidyTuesday-Weekly/blob/main/2022-W27/Appartment%20Area%20in%20the%20SF.png?raw=true)
+
+  <!-- toc -->
+* [UK Gender PayGap](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W26)
+![image](https://github.com/T-art-coder/TidyTuesday-Weekly/blob/main/2022-W26/TidyTuesday%202022%20W26.png?raw=true)
+
+  <!-- toc -->
 * [Juneteenth](https://github.com/T-art-coder/TidyTuesday-Weekly/tree/main/2022-W24)
 ![image](https://user-images.githubusercontent.com/58591530/176244565-489b5984-9274-4e16-862b-1e1fa5096c34.png)
   
