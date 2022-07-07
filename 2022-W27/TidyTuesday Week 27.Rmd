@@ -274,13 +274,13 @@ p <- rent[!is.na(rent$price), ] %>%
   facet_wrap(~county, ncol = 2) +
   scale_fill_manual(values = MetBrewerpalette) +
   scale_y_continuous(breaks = c(0, 2000, 4000), labels=scales::dollar_format())+
-  scale_x_continuous(breaks = c(2000, 2005, 2010, 2015, 2019))+
+  scale_x_continuous(breaks = c(2000, 2005, 2010, 2015, 2018))+
   my_pretty_theme+
   theme(axis.title.x = element_blank(),
         axis.title.y = element_blank(),
         panel.grid.major = element_blank(),
         legend.position="none")+
-  labs(title = "Rental Housing in California: An Overview", subtitle = "Average rent prices based on Craiglist data, 2000-2019", caption = "TidyTuesday W-27 2022 | K. Pennington Rental Housing Data | by @TimirZolkin")
+  labs(title = "Rental Housing in California: An Overview", subtitle = "Average rent prices based on Craiglist data, 2000-2018", caption = "TidyTuesday W-27 2022 | K. Pennington Rental Housing Data | by @TimirZolkin")
     
 p  
 ```
