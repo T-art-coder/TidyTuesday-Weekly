@@ -1,0 +1,222 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+```{r}
+#install.packages("gt")
+#install.packages("gtExtras")
+#install.packages("svglite")
+#install.packages("webshot")
+
+library(gt)
+library(gtExtras)
+library(tidyverse)
+```
+
+## Downdloads
+```{r}
+flights <- readr::read_csv('https://raw.githubusercontent.com/rfordatascience/tidytuesday/master/data/2022/2022-07-12/flights.csv')
+
+head(flights)
+```
+## Clean and Wrangle Data
+```{r}
+flights <- flights %>% mutate(STATE_NAME = str_replace(STATE_NAME, "Türkiye", "Turkey"))
+```
+
+```{r}
+flights_2022 <- flights %>%
+  filter(YEAR == c(2022)) %>%
+  filter(MONTH_NUM == c("01", "02", "03", "04", "05")) %>%
+  select(YEAR, APT_ICAO, APT_NAME, STATE_NAME, FLT_DEP_1, FLT_ARR_1, FLT_TOT_1 ) %>%
+  group_by(APT_NAME) %>%
+  summarize(Arrivals = sum(FLT_ARR_1),
+            Departures = sum(FLT_DEP_1),
+            Flights_2022 = sum(FLT_TOT_1)) %>%
+  arrange(desc(Flights_2022)) %>%
+  select(APT_NAME, Flights_2022)
+
+flights_2022
+```
+
+```{r}
+flights_2019 <- flights %>%
+  filter(YEAR == c(2019)) %>%
+  filter(MONTH_NUM == c("01", "02", "03", "04", "05")) %>%
+  select(YEAR, APT_ICAO, APT_NAME, STATE_NAME, FLT_DEP_1, FLT_ARR_1, FLT_TOT_1 ) %>%
+  group_by(APT_NAME) %>%
+  summarize(Arrivals = sum(FLT_ARR_1),
+            Departures = sum(FLT_DEP_1),
+            Flights_2019 = sum(FLT_TOT_1)) %>%
+  #arrange(desc(Flights_2019)) %>%
+  left_join(flights %>% select(APT_NAME, STATE_NAME) %>% distinct(), by = "APT_NAME") %>%
+  left_join(flights_2022, by = "APT_NAME") %>%
+  arrange(desc(Flights_2022))
+
+flights_2019
+```
+## Test {gt-table}
+```{r}
+flights_2019 %>%
+  head(10) %>%
+  gt() %>%
+  tab_header(title = md("Top European Airports by Flights in **2019/2022**"),
+             subtitle = md("Source:Eurostat")) %>%
+  cols_label(APT_NAME = "Airport",
+             STATE_NAME = "Country") %>%
+   tab_style(
+    # Select object to modify
+    locations = cells_title(groups = 'title'),
+    # Specify text style
+    style = list(
+      cell_text(
+        font=google_font(name = 'Bebas Neue'), 
+        size='xx-large',
+        color='indianred'
+  ))) %>%
+  gtExtras::gt_theme_nytimes() %>%
+    fmt_number(
+    columns = Arrivals,
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  fmt_number(
+    columns = Departures,
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  fmt_number(
+    columns = Flights_2019,
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  tab_source_note(source_note = "Data: Graver, Zhang, & Rutherford (2019) [via Our World in Data]") %>%
+  tab_style(
+     locations = cells_column_labels(columns = everything()),
+     style     = list(
+       #Give a thick border below
+       cell_borders(sides = "bottom", weight = px(10)),
+       #Make text bold
+       cell_text(weight = "bold", size = 20, color = "navyblue")
+     )
+  ) %>%
+  cols_hide(columns = Flights_2022)
+```
+```{r}
+install.packages("countrycode")
+
+#To convert country codes
+library(countrycode)
+```
+
+## Use flags sources from wikicommons (a database for with URL locations is available through data.world).
+```{r}
+df <- read.csv("https://query.data.world/s/6i5rbfkwhlgqoodcwl3gfzffscczxn", header=TRUE, stringsAsFactors=FALSE) %>%
+  select(Country, ImageURL)
+
+df 
+```
+
+```{r}
+flights_2019 <- flights_2019 %>% left_join(df, by  = c("STATE_NAME" = "Country"))
+head(flights_2019, 2)
+```
+
+
+## Final Plot
+```{r}
+airports_table <- flights_2019 %>%
+  head(10) %>%
+  mutate(Flights_2022_2 = Flights_2022) %>%
+  select(ImageURL, STATE_NAME, APT_NAME, Arrivals, Departures, Flights_2019, Flights_2022_2, Flights_2022) %>%
+  arrange(desc(Flights_2022)) %>%
+  gt() %>%
+  tab_header(title = md("TABLES TURNED:"),
+             subtitle = md("Instanbul Airport Overthrows Rivals in 2022")) %>%
+  cols_label(APT_NAME = "Airport",
+             STATE_NAME = "Country") %>%
+   tab_style(
+    # Select object to modify
+    locations = cells_title(groups = 'subtitle'),
+    # Specify text style
+    style = list(
+      cell_text(
+        font=google_font(name = 'Bebas Neue'), 
+        size='xx-large',
+        color='indianred'
+  ))) %>%
+  tab_style(
+    # Select object to modify
+    locations = cells_title(groups = 'title'),
+    # Specify text style
+    style = list(
+      cell_text(
+        font=google_font(name = 'Bebas Neue'), 
+        size='xx-large',
+        color='NavyBlue'
+  ))) %>%
+  gtExtras::gt_theme_nytimes() %>%
+  ## Format Columns
+    fmt_number(
+    columns = Arrivals, # hidden
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  fmt_number(
+    columns = Departures, # hidden
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  fmt_number(
+    columns = Flights_2022_2,
+    use_seps = TRUE,
+    sep_mark = " ",
+    decimals = 0) %>%
+  ## Add Caption
+  tab_source_note(source_note = "TidyTuesday W-28 2022 | Data: Eurocontrol | By @TimurZolkin") %>%
+  tab_options(source_notes.font.size = 14,
+              column_labels.font.weight = 'bold',
+              column_labels.font.size = 20) %>%
+  ## Add a thick upper border, change columns colour
+  tab_style(
+     locations = cells_column_labels(columns = everything()),
+     style     = list(
+       #Give a thick border below
+       cell_borders(sides = "bottom", weight = px(5)),
+       #Make text bold
+       cell_text(weight = "bold", size = 20, color = "navyblue")
+     )
+  ) %>%
+  ## Add Country Flags
+  gt_img_rows(columns = ImageURL, height = 20) %>%
+  ## Change Column Labels
+  cols_label(ImageURL = "", Flights_2022 = " To 2019 Flight Target in thousands", Flights_2022_2 = "2022") %>%
+  ## Hide unnecessary columns
+  cols_hide(columns = c(Arrivals, Departures, Flights_2019)) %>%
+  ## Build a bullet chart
+  gt_plt_bullet(column = Flights_2022, target = Flights_2019, width = 100,
+                 palette = c("lightblue", "red1")) %>%
+  ## Tinker column width
+  cols_width(APT_NAME ~ px(250)) %>%
+  cols_width(Flights_2022_2 ~ px(250)) %>%
+  ## Highlight Instanbull cell
+  tab_style(
+    style = list(
+      cell_fill(color = "#99FF99")
+    ),
+    locations = cells_body(
+      row = 1
+    )
+  ) %>%
+   cols_align(
+    align = "center", 
+    columns = APT_NAME)
+  # bullet chart 2019 2022
+
+airports_table
+```
+
+```{r}
+airports_table %>% gtsave(filename =  "TidyTuesday W28 2022 Airports.png")
+```
